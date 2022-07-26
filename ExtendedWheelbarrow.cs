@@ -19,16 +19,18 @@ namespace ExtendedWheelbarrow {
         public static ManualLogSource StaticLogger;
         public const string pluginGuid = "tinyresort.dinkum.extendedwheelbarrow";
         public const string pluginName = "Extended Wheelbarrow";
-        public const string pluginVersion = "1.0.0";
+        public const string pluginVersion = "1.1.1";
         public static ConfigEntry<bool> debugMode;
-        public static ConfigEntry<int> maxDirt;
+        public static int maxDirt;
         public static int realTotalDirt;
         public static float dirtTime;
+        public static bool setRealTotalDirt;
 
         private void Awake() {
 
             // Configuration
-            maxDirt = Config.Bind<int>("General", "MaxDirt", 100, "The maximum number of shovels of dirt that can be emptied into the wheelbarrow before its full.");
+            var maxDirtEntry = Config.Bind<int>("General", "MaxDirt", 100, "The maximum number of shovels of dirt that can be emptied into the wheelbarrow before its full. RANGE: 10 - 10000");
+            maxDirt = Mathf.Clamp(maxDirtEntry.Value, 10, 10000);
             debugMode = Config.Bind<bool>("General", "DebugMode", false, "If true, the BepinEx console will print out debug messages related to this mod.");
 
             #region Logging
@@ -59,8 +61,8 @@ namespace ExtendedWheelbarrow {
             harmony.Patch(removeDirt, new HarmonyMethod(removeDirtPatch));
             harmony.Patch(updateContents, new HarmonyMethod(updateContentsPatch));
             harmony.Patch(OnStartClient, new HarmonyMethod(OnStartClientPatch));
-            harmony.Patch(insertDirt, new HarmonyMethod(insertDirtPrefix));
             harmony.Patch(isHoldingAShovel, new HarmonyMethod(isHoldingAShovelPrefix));
+            harmony.Patch(insertDirt, new HarmonyMethod(insertDirtPrefix));
             #endregion
 
         }
@@ -76,7 +78,7 @@ namespace ExtendedWheelbarrow {
             
             // Otherwise, show the dirt model and size it appropriately
             __instance.dirtFillUp.gameObject.SetActive(true);
-            float fillPercentage = 0.05f + (__instance.totalDirt / (float) maxDirt.Value) * 0.95f;
+            float fillPercentage = 0.05f + (__instance.totalDirt / (float) maxDirt) * 0.95f;
             __instance.dirtFillUp.transform.localScale = new Vector3(fillPercentage >= 0.5f ? 1 : 0.7f, fillPercentage, fillPercentage >= 0.5f ? 1 : 0.7f);
             return false;
             
@@ -87,8 +89,11 @@ namespace ExtendedWheelbarrow {
         public static void isHoldingAShovelPrefix(Wheelbarrow __instance) {
             
             // This method is called twice if the player is adding dirt, but we only want to save the total dirt once
-            if (Time.time - dirtTime <= 0.05f) return;
-            dirtTime = Time.time;
+            if (Time.realtimeSinceStartup - dirtTime <= 0.005f) {
+                if (debugMode.Value) { StaticLogger.LogWarning("Skipping setting real total dirt (Time: " + Time.time + ")"); }
+                return;
+            }
+            dirtTime = Time.realtimeSinceStartup;
             
             // Logs the current amount of dirt
             if (debugMode.Value) 
@@ -96,16 +101,22 @@ namespace ExtendedWheelbarrow {
             
             // Saves the true total amount of dirt so that its value can be used later instead of the game's value
             realTotalDirt = __instance.totalDirt;
+            setRealTotalDirt = true;
             
             // If we have more than 9 dirt, temporarily set it to 9 to allow more dirt to be added
-            if (__instance.totalDirt >= 10 && __instance.totalDirt < maxDirt.Value) { __instance.totalDirt = 9; }
+            if (__instance.totalDirt >= 10 && __instance.totalDirt < maxDirt) { __instance.totalDirt = 9; }
             
         }
 
         // When inserting dirt, this make sure the new total dirt is based on the true amount that we have saved previously
         [HarmonyPrefix]
         public static void insertDirtPrefix(Wheelbarrow __instance) {
+            if (!setRealTotalDirt) {
+                StaticLogger.LogError("The real total dirt isn't being set properly (Time: " + Time.time + ")");
+                return;
+            }
             __instance.totalDirt = realTotalDirt;
+            setRealTotalDirt = false;
             if (debugMode.Value) {
                 StaticLogger.LogInfo("Adding Dirt (Time: " + Time.time + ")");
                 StaticLogger.LogInfo("New Total Dirt: " + (__instance.totalDirt + 1) + "/" + __instance.layerIds.Length);
@@ -116,7 +127,7 @@ namespace ExtendedWheelbarrow {
         // Also fixes a bug with the base game that caused the layers of dirt to be wrong when removing dirt
         public static bool removeDirtPatch(Wheelbarrow __instance) {
             __instance.NetworktotalDirt = realTotalDirt - 1;
-            __instance.NetworktopDirtId = __instance.layerIds[Mathf.Clamp(__instance.totalDirt - 1, 0, maxDirt.Value)];
+            __instance.NetworktopDirtId = __instance.layerIds[Mathf.Clamp(__instance.totalDirt - 1, 0, maxDirt)];
             if (debugMode.Value) {
                 StaticLogger.LogInfo("Removing Dirt (Time: " + Time.time + ")");
                 StaticLogger.LogInfo("New Total Dirt: " + __instance.totalDirt + "/" + __instance.layerIds.Length);
@@ -126,7 +137,7 @@ namespace ExtendedWheelbarrow {
 
         // Sets the dirt layers array to be the correct length
         public static bool OnStartClientPatch(Wheelbarrow __instance) {
-            if (__instance.layerIds.Length == 10) { __instance.layerIds = new int[maxDirt.Value]; }
+            if (__instance.layerIds.Length == 10) { __instance.layerIds = new int[maxDirt]; }
             return true;
         }
 
