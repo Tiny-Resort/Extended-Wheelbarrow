@@ -86,15 +86,21 @@ namespace ExtendedWheelbarrow {
         }
 
         
-        public static bool isHoldingAShovelPatch(Wheelbarrow __instance, InventoryItem itemToCheck) {
+        public static bool isHoldingAShovelPatch(Wheelbarrow __instance, InventoryItem itemToCheck, ref bool __result) {
+            
+            if (debugMode.Value) { StaticLogger.LogInfo("Checking shovel contents (Time: " + Time.time + ")"); }
             for (int index = 0; index < __instance.shovelsToUse.Length; ++index) {
                 if ((UnityEngine.Object) itemToCheck == (UnityEngine.Object) __instance.shovelsToUse[index]) {
-                    if (!WheelbarrowSavedValues.ContainsKey(__instance.netId))
+                    if (!WheelbarrowSavedValues.ContainsKey(__instance.netId)) {
+                        if (debugMode.Value) { StaticLogger.LogInfo("Found dirt in shovel (Time: " + Time.time + ")"); }
                         WheelbarrowSavedValues[__instance.netId] = __instance.totalDirt;
+                    }
                     if (__instance.totalDirt >= 10 && __instance.totalDirt < maxDirt) { __instance.totalDirt = 9; }
-                    return true;
+                    __result = true;
+                    return false;
                 }
             }
+            __result = false;
             return false;
         }
 
@@ -104,25 +110,26 @@ namespace ExtendedWheelbarrow {
             
             if (!WheelbarrowSavedValues.ContainsKey(__instance.netId)) return;
             
-            __instance.totalDirt = WheelbarrowSavedValues[__instance.netId];
+            __instance.totalDirt = Mathf.Clamp(WheelbarrowSavedValues[__instance.netId] + multiplier.Value - 1, 0, maxDirt - 1);
             WheelbarrowSavedValues.Remove(__instance.netId);
             
             if (debugMode.Value) {
                 StaticLogger.LogInfo("Adding Dirt (Time: " + Time.time + ")");
-                StaticLogger.LogInfo("New Total Dirt: " + (__instance.totalDirt + 1) + "/" + __instance.layerIds.Length);
+                StaticLogger.LogInfo("New Total Dirt: " + (__instance.totalDirt + multiplier.Value) + "/" + __instance.layerIds.Length);
             }
+            
         }
 
         // When dirt is removed from the wheelbarrow, this makes sure our saved value is used
         // Also fixes an issue with the base game that caused the layers of dirt to be wrong when removing dirt
         public static bool removeDirtPatch(Wheelbarrow __instance) {
             
-            if (!WheelbarrowSavedValues.ContainsKey(__instance.netId)) return true;
-            
-            __instance.NetworktotalDirt = WheelbarrowSavedValues[__instance.netId] - 1;
+            //if (!WheelbarrowSavedValues.ContainsKey(__instance.netId)) return true;
+            //__instance.NetworktotalDirt = WheelbarrowSavedValues[__instance.netId] - 1;
+            //WheelbarrowSavedValues.Remove(__instance.netId);
+            __instance.NetworktotalDirt = __instance.totalDirt - 1;
             __instance.NetworktopDirtId = __instance.layerIds[Mathf.Clamp(__instance.totalDirt - 1, 0, maxDirt)];
-            WheelbarrowSavedValues.Remove(__instance.netId);
-            
+
             if (debugMode.Value) {
                 StaticLogger.LogInfo("Removing Dirt (Time: " + Time.time + ")");
                 StaticLogger.LogInfo("New Total Dirt: " + __instance.totalDirt + "/" + __instance.layerIds.Length);
