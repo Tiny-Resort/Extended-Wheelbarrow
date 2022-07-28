@@ -23,6 +23,7 @@ namespace ExtendedWheelbarrow {
         public const string pluginVersion = "1.3.0";
         public static ConfigEntry<int> multiplier;
         public static ConfigEntry<bool> isDebug;
+        public static ConfigEntry<int> nexusID;
         public static int maxDirt;
         public static Dictionary<uint, int> WheelbarrowSavedValues = new Dictionary<uint, int>();
         
@@ -38,7 +39,8 @@ namespace ExtendedWheelbarrow {
             maxDirt = Mathf.Clamp(maxDirtEntry.Value, 10, 10000);
             multiplier = Config.Bind<int>("General", "ShovelMultiplier", 1, "The number of shovels-worth of dirt that is added to the wheelbarrow when inserting dirt. Range: 1-100");
             isDebug = Config.Bind<bool>("General", "DebugMode", false, "If true, the BepinEx console will print out debug messages related to this mod.");
-        
+            nexusID = Config.Bind<int>("General", "NexusID", 11, "Nexus Mod ID. You can find it on the mod's page on nexusmods.com");
+
             #region Logging
             StaticLogger = Logger;
             BepInExInfoLogInterpolatedStringHandler handler = new BepInExInfoLogInterpolatedStringHandler(18, 1, out var flag);
