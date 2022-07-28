@@ -21,19 +21,24 @@ namespace ExtendedWheelbarrow {
         public const string pluginGuid = "tinyresort.dinkum.extendedwheelbarrow";
         public const string pluginName = "Extended Wheelbarrow";
         public const string pluginVersion = "1.3.0";
-        public static ConfigEntry<bool> debugMode;
         public static ConfigEntry<int> multiplier;
+        public static ConfigEntry<bool> isDebug;
         public static int maxDirt;
         public static Dictionary<uint, int> WheelbarrowSavedValues = new Dictionary<uint, int>();
+        
 
+        public static void Dbgl(string str = "", bool pref = true) {
+            if (isDebug.Value) { StaticLogger.LogInfo(str); }
+        }
+        
         private void Awake() {
 
             // Configuration
             var maxDirtEntry = Config.Bind<int>("General", "MaxDirt", 100, "The maximum number of shovels of dirt that can be emptied into the wheelbarrow before its full. RANGE: 10 - 10000");
             maxDirt = Mathf.Clamp(maxDirtEntry.Value, 10, 10000);
             multiplier = Config.Bind<int>("General", "ShovelMultiplier", 1, "The number of shovels-worth of dirt that is added to the wheelbarrow when inserting dirt. Range: 1-100");
-            debugMode = Config.Bind<bool>("General", "DebugMode", false, "If true, the BepinEx console will print out debug messages related to this mod.");
-
+            isDebug = Config.Bind<bool>("General", "DebugMode", false, "If true, the BepinEx console will print out debug messages related to this mod.");
+        
             #region Logging
             StaticLogger = Logger;
             BepInExInfoLogInterpolatedStringHandler handler = new BepInExInfoLogInterpolatedStringHandler(18, 1, out var flag);
@@ -87,12 +92,11 @@ namespace ExtendedWheelbarrow {
 
         
         public static bool isHoldingAShovelPatch(Wheelbarrow __instance, InventoryItem itemToCheck, ref bool __result) {
-            
-            if (debugMode.Value) { StaticLogger.LogInfo("Checking shovel contents (Time: " + Time.time + ")"); }
+            Dbgl($"Checking shovel contents (Time: {Time.time})");
             for (int index = 0; index < __instance.shovelsToUse.Length; ++index) {
                 if ((UnityEngine.Object) itemToCheck == (UnityEngine.Object) __instance.shovelsToUse[index]) {
                     if (!WheelbarrowSavedValues.ContainsKey(__instance.netId)) {
-                        if (debugMode.Value) { StaticLogger.LogInfo("Found dirt in shovel (Time: " + Time.time + ")"); }
+                        Dbgl("Found dirt in shovel (Time: {Time.time})"); }
                         WheelbarrowSavedValues[__instance.netId] = __instance.totalDirt;
                     }
                     if (__instance.totalDirt >= 10 && __instance.totalDirt < maxDirt) { __instance.totalDirt = 9; }
@@ -112,11 +116,9 @@ namespace ExtendedWheelbarrow {
             
             __instance.totalDirt = Mathf.Clamp(WheelbarrowSavedValues[__instance.netId] + multiplier.Value - 1, 0, maxDirt - 1);
             WheelbarrowSavedValues.Remove(__instance.netId);
+            Dbgl($"Adding Dirt (Time: {Time.time})"); 
+            Dbgl($"New Total Dirt: {__instance.totalDirt + multiplier.Value}/{__instance.layerIds.Length}");
             
-            if (debugMode.Value) {
-                StaticLogger.LogInfo("Adding Dirt (Time: " + Time.time + ")");
-                StaticLogger.LogInfo("New Total Dirt: " + (__instance.totalDirt + multiplier.Value) + "/" + __instance.layerIds.Length);
-            }
             
         }
 
@@ -129,11 +131,8 @@ namespace ExtendedWheelbarrow {
             //WheelbarrowSavedValues.Remove(__instance.netId);
             __instance.NetworktotalDirt = __instance.totalDirt - 1;
             __instance.NetworktopDirtId = __instance.layerIds[Mathf.Clamp(__instance.totalDirt - 1, 0, maxDirt)];
-
-            if (debugMode.Value) {
-                StaticLogger.LogInfo("Removing Dirt (Time: " + Time.time + ")");
-                StaticLogger.LogInfo("New Total Dirt: " + __instance.totalDirt + "/" + __instance.layerIds.Length);
-            }
+            Dbgl($"Adding Dirt (Time: {Time.time})");
+            Dbgl($"New Total Dirt: {__instance.totalDirt}/{__instance.layerIds.Length}");
 
             return false;
             
