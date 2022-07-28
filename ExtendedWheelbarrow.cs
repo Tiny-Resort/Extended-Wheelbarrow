@@ -96,7 +96,7 @@ namespace ExtendedWheelbarrow {
             for (int index = 0; index < __instance.shovelsToUse.Length; ++index) {
                 if ((UnityEngine.Object) itemToCheck == (UnityEngine.Object) __instance.shovelsToUse[index]) {
                     if (!WheelbarrowSavedValues.ContainsKey(__instance.netId)) {
-                        Dbgl("Found dirt in shovel (Time: {Time.time})"); }
+                        Dbgl("Found dirt in shovel (Time: {Time.time})"); 
                         WheelbarrowSavedValues[__instance.netId] = __instance.totalDirt;
                     }
                     if (__instance.totalDirt >= 10 && __instance.totalDirt < maxDirt) { __instance.totalDirt = 9; }
