@@ -119,7 +119,7 @@ namespace ExtendedWheelbarrow {
             __instance.totalDirt = Mathf.Clamp(WheelbarrowSavedValues[__instance.netId] + multiplier.Value - 1, 0, maxDirt - 1);
             WheelbarrowSavedValues.Remove(__instance.netId);
             Dbgl($"Adding Dirt (Time: {Time.time})"); 
-            Dbgl($"New Total Dirt: {__instance.totalDirt}/{__instance.layerIds.Length}");
+            Dbgl($"New Total Dirt: {__instance.totalDirt + 1}/{__instance.layerIds.Length}");
             
             
         }
