@@ -11,51 +11,24 @@ using UnityEngine;
 using HarmonyLib;
 using System.Reflection;
 
-
-namespace ExtendedWheelbarrow {
+namespace TinyResort {
     
     [BepInPlugin(pluginGuid, pluginName, pluginVersion)]
     public class ExtendedWheelbarrow : BaseUnityPlugin {
 
-        public static ManualLogSource StaticLogger;
+        public static TRPlugin Plugin;
         public const string pluginGuid = "tinyresort.dinkum.extendedwheelbarrow";
         public const string pluginName = "Extended Wheelbarrow";
         public const string pluginVersion = "2.0.0";
-        public static ConfigEntry<bool> isDebug;
-        public static ConfigEntry<int> nexusID;
-        
-        public static void Dbgl(string str = "", bool pref = true) {
-            if (isDebug.Value) { StaticLogger.LogInfo(str); }
-        }
         
         private void Awake() {
 
-            // Configuration
-            isDebug = Config.Bind<bool>("General", "DebugMode", false, "If true, the BepinEx console will print out debug messages related to this mod.");
-            nexusID = Config.Bind<int>("General", "NexusID", 11, "Nexus Mod ID. You can find it on the mod's page on nexusmods.com");
-
-            #region Logging
-            StaticLogger = Logger;
-            BepInExInfoLogInterpolatedStringHandler handler = new BepInExInfoLogInterpolatedStringHandler(18, 1, out var flag);
-            if (flag) { handler.AppendLiteral("Plugin " + pluginGuid + " (v" + pluginVersion + ") loaded!"); }
-            StaticLogger.LogInfo(handler);
-            #endregion
+            Plugin = TRTools.Initialize(this, Logger, 11, pluginGuid, pluginName, pluginVersion);
 
             #region Patching
-            Harmony harmony = new Harmony(pluginGuid);
-
-            MethodInfo removeDirt = AccessTools.Method(typeof(Wheelbarrow), "removeDirt");
-            MethodInfo removeDirtPatch = AccessTools.Method(typeof(ExtendedWheelbarrow), "removeDirtPatch");
-
-            MethodInfo updateContents = AccessTools.Method(typeof(Wheelbarrow), "updateContents");
-            MethodInfo updateContentsPatch = AccessTools.Method(typeof(ExtendedWheelbarrow), "updateContentsPatch");
-            
-            MethodInfo insertDirt = AccessTools.Method(typeof(Wheelbarrow), "insertDirt");
-            MethodInfo insertDirtPrefix = AccessTools.Method(typeof(ExtendedWheelbarrow), "insertDirtPrefix");
-
-            harmony.Patch(removeDirt, new HarmonyMethod(removeDirtPatch));
-            harmony.Patch(updateContents, new HarmonyMethod(updateContentsPatch));
-            harmony.Patch(insertDirt, new HarmonyMethod(insertDirtPrefix));
+            Plugin.QuickPatch(typeof(Wheelbarrow), "removeDirt", typeof(ExtendedWheelbarrow), "removeDirtPatch");
+            Plugin.QuickPatch(typeof(Wheelbarrow), "updateContents", typeof(ExtendedWheelbarrow), "updateContentsPatch");
+            Plugin.QuickPatch(typeof(Wheelbarrow), "insertDirt", typeof(ExtendedWheelbarrow), "insertDirtPrefix");
             #endregion
 
         }
@@ -71,14 +44,11 @@ namespace ExtendedWheelbarrow {
         [HarmonyPrefix]
         public static void insertDirtPrefix(Wheelbarrow __instance, int layerId) {
             __instance.totalDirt = 0;
-            Dbgl($"Adding Dirt (Time: {Time.time})"); 
-            Dbgl($"New Infinite Dirt Type: { layerId }");
         }
 
         // Makes sure dirt is never less than 1 when removing dirt
         public static bool removeDirtPatch(Wheelbarrow __instance) {
             __instance.NetworktotalDirt = 1;
-            Dbgl($"Removing Dirt (Time: {Time.time})");
             return false;
         }
 
