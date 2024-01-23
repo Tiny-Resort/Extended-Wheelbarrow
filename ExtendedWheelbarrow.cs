@@ -14,7 +14,7 @@ using System.Reflection;
 namespace TinyResort {
     
     [BepInPlugin(pluginGuid, pluginName, pluginVersion)]
-    public class ExtendedWheelbarrow : BaseUnityPlugin {
+    public class ExtendedWheelbarrow : BaseUnityPlugin {  
 
         public static TRPlugin Plugin;
         public const string pluginGuid = "tinyresort.dinkum.extendedwheelbarrow";
@@ -23,7 +23,7 @@ namespace TinyResort {
         
         private void Awake() {
 
-            Plugin = TRTools.Initialize(this, Logger, 11, pluginGuid, pluginName, pluginVersion);
+            Plugin = TRTools.Initialize(this, 11);
 
             #region Patching
             Plugin.QuickPatch(typeof(Wheelbarrow), "removeDirt", typeof(ExtendedWheelbarrow), "removeDirtPatch");
@@ -38,7 +38,7 @@ namespace TinyResort {
             __instance.dirtFillUp.gameObject.SetActive(__instance.totalDirt != 0);
             __instance.dirtFillUp.transform.localScale = new Vector3(1, 1, 1);
             return false;
-        }
+        } 
 
         // When inserting dirt, keep it at 1 but still change the dirt type
         [HarmonyPrefix]

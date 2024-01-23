@@ -32,11 +32,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ExtendedWheelbarrow.cs" />
-    <Compile Include="..\TinyResortTools\Tiny Resort Tools\**">
-      <Link>Tiny Resort Tools\**</Link>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="dev.TinyResort.TRTools">
+      <HintPath>..\DinkumInstallFolder\BepInEx\plugins\dev.TinyResort.TRTools.dll</HintPath>
+    </Reference>
     <Reference Include="0Harmony">
       <HintPath>..\DinkumInstallFolder\BepInEx\core\0Harmony.dll</HintPath>
     </Reference>
@@ -370,6 +370,6 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
   <PropertyGroup>
-    <PostBuildEvent>call "$(SolutionDir)..\PostBuildBat.bat" "$(SolutionDir)bin\Debug\$(TargetName).dll" "$(TargetName)"</PostBuildEvent>
+    <PostBuildEvent>call "$(SolutionDir)..\PostBuildBat.bat" "$(SolutionDir)bin\Debug\$(AssemblyName).dll" "$(AssemblyName).dll"</PostBuildEvent>
   </PropertyGroup>
 </Project>
