@@ -19,7 +19,7 @@ namespace TinyResort {
         public static TRPlugin Plugin;
         public const string pluginGuid = "tinyresort.dinkum.extendedwheelbarrow";
         public const string pluginName = "Extended Wheelbarrow";
-        public const string pluginVersion = "2.0.0";
+        public const string pluginVersion = "2.0.1";
         
         private void Awake() {
 
